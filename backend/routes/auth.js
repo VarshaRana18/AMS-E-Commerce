@@ -7,6 +7,15 @@ import Request from "../models/Request.js";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import { Resend } from 'resend';
+import {
+  register,
+  login,
+  adminLogin,
+  getMe,
+  googleAuth,
+  updateProfile,
+} from "../controllers/auth.controller.js";
+import { protect, restrictTo } from "../middleware/auth.middleware.js";
 dotenv.config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -36,7 +45,14 @@ const generateOrderId = async () => {
 
 
 //To create a new user
-router.post("/register", async (req, res) => {
+router.post("/register", register);
+router.post("/login", login);
+router.post("/admin/login", adminLogin);
+router.get("/me", protect, getMe);
+router.put("/profile", protect, updateProfile);
+
+// Legacy register endpoint
+router.post("/register-legacy", async (req, res) => {
   const { name, email, mobile } = req.body;
 
   const newUser = new User({
@@ -262,7 +278,8 @@ router.get("/check-user/:email", async (req, res) => {
 });
 
 //Create a new user with Google Login
-router.post("/google", async (req, res) => {
+router.post("/google", googleAuth);
+router.post("/google-legacy", async (req, res) => {
   try {
     const { name, email, image } = req.body;
 
