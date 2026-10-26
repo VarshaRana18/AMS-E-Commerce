@@ -1,0 +1,7 @@
+.full-screen-image {
+    width: 100vw;
+    height: calc(100vh - 20px); /* Adjust 60px to the height of your navbar */
+    object-fit: cover;
+  }
+
+  

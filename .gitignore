@@ -1,0 +1,4 @@
+node_modules/
+.env
+ruff.txt
+ruff.js

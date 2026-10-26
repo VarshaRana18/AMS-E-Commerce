@@ -1,0 +1,8 @@
+.custom-slider .slider-track {
+    background-color: #3b82f6 !important; /* Tailwind CSS blue-500 */
+  }
+  
+  .custom-slider .slider-thumb {
+    background-color: #3b82f6 !important; /* Tailwind CSS blue-500 */
+    border-color: #3b82f6 !important; /* Tailwind CSS blue-500 */
+  }

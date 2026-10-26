@@ -1,0 +1,227 @@
+[
+  {
+    "customer_id": "CUST001",
+    "name": "Alexandara Doe",
+    "email": "johndoe@example.com",
+    "phone": "+1-123-456-7890",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyW2MAFrFnfa_bT1jSttLbmvfotJcqQyCCGg&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "123 Main St, New York, NY 10001, USA"
+      },
+      {
+        "type": "Office",
+        "address": "456 Elm St, New York, NY 10002, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD1001",
+        "date": "2025-02-01",
+        "items": [
+          { "product": "Gaming Laptop", "price": 1500.99, "quantity": 1 },
+          { "product": "Mechanical Keyboard", "price": 99.99, "quantity": 1 }
+        ],
+        "total_amount": 1600.98
+      },
+      {
+        "order_id": "ORD1002",
+        "date": "2025-02-10",
+        "items": [
+          { "product": "Wireless Mouse", "price": 49.99, "quantity": 1 }
+        ],
+        "total_amount": 49.99
+      }
+    ],
+    "password": "$2b$12$abcdefghijklmnopqrstuv",
+    "card_details": {
+      "card_number": "**** **** **** 1234",
+      "expiry_date": "12/27",
+      "cvv": "***"
+    },
+    "vpa_id": "johndoe@upi"
+  },
+  {
+    "customer_id": "CUST002",
+    "name": "Jane Smith",
+    "email": "janesmith@example.com",
+    "phone": "+1-987-654-3210",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDRlp-KGr_M94k_oor4Odjn2UzbAS7n1YoA&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "789 Oak St, Los Angeles, CA 90001, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD2001",
+        "date": "2025-01-25",
+        "items": [
+          { "product": "Custom PC Build", "price": 2500.00, "quantity": 1 }
+        ],
+        "total_amount": 2500.00
+      }
+    ],
+    "password": "$2b$12$mnopqrstuvabcdefghijkl",
+    "card_details": {
+      "card_number": "**** **** **** 5678",
+      "expiry_date": "06/28",
+      "cvv": "***"
+    },
+    "vpa_id": "janesmith@upi"
+  },
+  {
+    "customer_id": "CUST003",
+    "name": "Alice Johnson",
+    "email": "alicej@example.com",
+    "phone": "+1-555-234-6789",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsb_V_Ha4XAl47doWf_2lF-actuld60ssYew&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "321 Maple St, Chicago, IL 60601, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD3001",
+        "date": "2025-03-05",
+        "items": [
+          { "product": "Smartphone", "price": 999.99, "quantity": 1 },
+          { "product": "Wireless Earbuds", "price": 199.99, "quantity": 1 }
+        ],
+        "total_amount": 1199.98
+      }
+    ],
+    "password": "$2b$12$abcdefgh123456ijklmnop",
+    "card_details": {
+      "card_number": "**** **** **** 9876",
+      "expiry_date": "09/29",
+      "cvv": "***"
+    },
+    "vpa_id": "alicej@upi"
+  },
+  {
+    "customer_id": "CUST004",
+    "name": "Robert Brown",
+    "email": "robertb@example.com",
+    "phone": "+1-444-678-9012",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQn9zilY2Yu2hc19pDZFxgWDTUDy5DId7ITqA&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "654 Pine St, Houston, TX 77001, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD4001",
+        "date": "2025-04-15",
+        "items": [
+          { "product": "4K Monitor", "price": 499.99, "quantity": 2 }
+        ],
+        "total_amount": 999.98
+      }
+    ],
+    "password": "$2b$12$ijklmnopabcdefgh123456",
+    "card_details": {
+      "card_number": "**** **** **** 4321",
+      "expiry_date": "07/26",
+      "cvv": "***"
+    },
+    "vpa_id": "robertb@upi"
+  },
+  {
+    "customer_id": "CUST005",
+    "name": "Emily Davis",
+    "email": "emilyd@example.com",
+    "phone": "+1-333-345-6789",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBwgu1A5zgPSvfE83nurkuzNEoXs9DMNr8Ww&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "987 Cedar St, Phoenix, AZ 85001, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD5001",
+        "date": "2025-05-10",
+        "items": [
+          { "product": "Fitness Tracker", "price": 149.99, "quantity": 1 }
+        ],
+        "total_amount": 149.99
+      }
+    ],
+    "password": "$2b$12$mnopqrstuv123456abcdefgh",
+    "card_details": {
+      "card_number": "**** **** **** 6789",
+      "expiry_date": "05/30",
+      "cvv": "***"
+    },
+    "vpa_id": "emilyd@upi"
+  },
+  {
+    "customer_id": "CUST006",
+    "name": "Michael Wilson",
+    "email": "michaelw@example.com",
+    "phone": "+1-222-987-6543",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIfkDIV1KJ22YDU058LFpPZbszO1l5lX9v8Q&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "159 Birch St, Seattle, WA 98101, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD6001",
+        "date": "2025-06-20",
+        "items": [
+          { "product": "External Hard Drive", "price": 79.99, "quantity": 1 },
+          { "product": "USB-C Hub", "price": 39.99, "quantity": 1 }
+        ],
+        "total_amount": 119.98
+      }
+    ],
+    "password": "$2b$12$uvwxyzabcdef123456mnopqr",
+    "card_details": {
+      "card_number": "**** **** **** 5432",
+      "expiry_date": "08/25",
+      "cvv": "***"
+    },
+    "vpa_id": "michaelw@upi"
+  },
+  {
+    "customer_id": "CUST007",
+    "name": "Sophia Martinez",
+    "email": "sophiam@example.com",
+    "phone": "+1-111-765-4321",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBwgu1A5zgPSvfE83nurkuzNEoXs9DMNr8Ww&s",
+    "addresses": [
+      {
+        "type": "Home",
+        "address": "753 Walnut St, Miami, FL 33101, USA"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD7001",
+        "date": "2025-07-30",
+        "items": [
+          { "product": "Smartwatch", "price": 249.99, "quantity": 1 }
+        ],
+        "total_amount": 249.99
+      }
+    ],
+    "password": "$2b$12$abcdefuvwxyz123456mnopqr",
+    "card_details": {
+      "card_number": "**** **** **** 8765",
+      "expiry_date": "11/27",
+      "cvv": "***"
+    },
+    "vpa_id": "sophiam@upi"
+  }
+]

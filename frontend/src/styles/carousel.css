@@ -1,0 +1,19 @@
+.custom-swiper-container {
+    position: relative;
+  }
+  
+  .custom-swiper-container .swiper-pagination {
+    position: absolute;
+    bottom: 10px; /* Adjust this value as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+  
+  .custom-swiper-container .swiper-pagination .custom-bullet {
+    width: 30px; /* Adjust the width as needed */
+    height: 5px; /* Adjust the height as needed */
+    border-radius: 10px; /* Makes the bullet oval */
+    background-color: white; /* Adjust the color as needed */
+    margin: 0 5px; /* Adjust the margin as needed */
+  }
