@@ -83,14 +83,14 @@ const userSchema = new mongoose.Schema(
     ],
   },
   {
-    timestamps: true,
+    timestamps: true, //Automatically adds two fields to your user documents: createdAt and updatedAt.
     toJSON: {
       virtuals: true,
-      transform: function (doc, ret) {
+      transform: function (doc, ret) { 
         delete ret.password;
         return ret;
       },
-    },
+    },//In an Express.js API, when you do res.json(user), Express automatically calls .toJSON() on the Mongoose document.
     toObject: {
       virtuals: true,
       transform: function (doc, ret) {
@@ -98,6 +98,8 @@ const userSchema = new mongoose.Schema(
         return ret;
       },
     },
+    //toJSON and toObject : These properties configure how a Mongoose document behaves when it is converted into a standard JavaScript object using .toJSON() or .toObject().
+    //transform is a lifecycle hook that runs right before the conversion is finalized.
   }
 );
 
