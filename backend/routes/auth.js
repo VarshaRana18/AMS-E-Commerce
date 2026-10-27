@@ -11,8 +11,8 @@ import {
   register,
   login,
   adminLogin,
+  getProfile,
   getMe,
-  googleAuth,
   updateProfile,
 } from "../controllers/auth.controller.js";
 import { protect, restrictTo } from "../middleware/auth.middleware.js";
@@ -48,7 +48,8 @@ const generateOrderId = async () => {
 router.post("/register", register);
 router.post("/login", login);
 router.post("/admin/login", adminLogin);
-router.get("/me", protect, getMe);
+router.get("/profile", protect, getProfile);
+router.get("/me", protect, getProfile);
 router.put("/profile", protect, updateProfile);
 
 // Legacy register endpoint
@@ -274,40 +275,6 @@ router.get("/check-user/:email", async (req, res) => {
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-//Create a new user with Google Login
-router.post("/google", googleAuth);
-router.post("/google-legacy", async (req, res) => {
-  try {
-    const { name, email, image } = req.body;
-
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = new User({
-        name,
-        email,
-        mobile: "",
-        image:
-          image || "https://www.svgrepo.com/show/452030/avatar-default.svg",
-        isVerified: true,
-      });
-
-      await user.save();
-      return res
-        .status(201)
-        .json({ message: "User registered successfully", user });
-    }
-
-    console.log("User already exists:", user);
-    res.status(200).json({ message: "User already exists", user });
-  } catch (error) {
-    console.error("Google login error:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
   }
 });
 

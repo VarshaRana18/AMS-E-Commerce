@@ -11,12 +11,16 @@ import cors from "cors";
 import carouselRoutes from "./routes/carousel.js";
 import repairRoutes from "./routes/repairs.js";
 import FAQsRoutes from "./routes/faqs.js";
+
+
+dotenv.config();
+
 console.log("Environment Variables:", {
   NODE_ENV: process.env.NODE_ENV,
   MONGO_URI: process.env.MONGO_URI ? "exists" : "missing",
   VERCEL: process.env.VERCEL ? "true" : "false"
 });
-dotenv.config();
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;

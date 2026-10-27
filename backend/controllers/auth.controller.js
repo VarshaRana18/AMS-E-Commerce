@@ -115,16 +115,22 @@ export const adminLogin = async (req, res) => {
     }
 
     const envAdminUser = (process.env.ADMIN_USERNAME || "").toLowerCase().trim();
+    const envAdminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
     const envAdminPass = process.env.ADMIN_PASSWORD;
 
     // Check if matching .env admin configuration
-    if (envAdminUser && identifier === envAdminUser && envAdminPass && password === envAdminPass) {
+    const isEnvAdminMatch =
+      (identifier === envAdminUser || identifier === envAdminEmail) &&
+      password === envAdminPass;
+
+    if (isEnvAdminMatch) {
       // Find or upsert the admin user document in MongoDB
-      let admin = await User.findOne({ email: identifier });
+      const adminEmailToUse = envAdminEmail || (identifier.includes("@") ? identifier : `${identifier}@ams.local`);
+      let admin = await User.findOne({ email: adminEmailToUse });
       if (!admin) {
         admin = await User.create({
           name: "System Administrator",
-          email: identifier.includes("@") ? identifier : `${identifier}@ams.local`,
+          email: adminEmailToUse,
           password: envAdminPass,
           role: "admin",
           isVerified: true,
@@ -162,10 +168,10 @@ export const adminLogin = async (req, res) => {
 
 /**
  * @desc    Get current logged in user profile
- * @route   GET /api/auth/me
+ * @route   GET /api/auth/profile
  * @access  Private (Requires JWT)
  */
-export const getMe = async (req, res) => {
+export const getProfile = async (req, res) => {
   try {
     // req.user was populated by protect middleware
     const user = await User.findById(req.user._id);
@@ -181,7 +187,7 @@ export const getMe = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("GetMe error:", error);
+    console.error("GetProfile error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user profile",
@@ -189,45 +195,8 @@ export const getMe = async (req, res) => {
   }
 };
 
-/**
- * @desc    Authenticate or register user via Google OAuth
- * @route   POST /api/auth/google
- * @access  Public
- */
-export const googleAuth = async (req, res) => {
-  try {
-    const { name, email, image } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required for Google authentication",
-      });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-    let user = await User.findOne({ email: normalizedEmail });
-
-    if (!user) {
-      user = await User.create({
-        name: name || "Google User",
-        email: normalizedEmail,
-        image: image || "https://www.svgrepo.com/show/452030/avatar-default.svg",
-        isVerified: true,
-        isGoogleUser: true,
-        role: "customer",
-      });
-    }
-
-    return sendTokenResponse(user, 200, res, "Google authentication successful");
-  } catch (error) {
-    console.error("Google auth error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Google authentication failed",
-    });
-  }
-};
+// Alias for backwards compatibility if needed
+export const getMe = getProfile;
 
 /**
  * @desc    Update user profile

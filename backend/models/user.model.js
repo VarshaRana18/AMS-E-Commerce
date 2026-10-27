@@ -21,12 +21,9 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
+      required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
       select: false, // Critical: Prevents password hash from being returned in queries
-      required: function () {
-        // Only require password if not an OAuth (e.g., Google) user
-        return !this.isGoogleUser;
-      },
     },
     role: {
       type: String,
@@ -35,10 +32,6 @@ const userSchema = new mongoose.Schema(
         message: "{VALUE} is not a valid role",
       },
       default: "customer",
-    },
-    isGoogleUser: {
-      type: Boolean,
-      default: false,
     },
     mobile: {
       type: String,
