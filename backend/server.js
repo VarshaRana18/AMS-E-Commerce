@@ -3,6 +3,15 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import fileUpload from "express-fileupload";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure .env is loaded whether running from project root or backend directory
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 import { connectDB } from "./config/db.js";
 
@@ -23,12 +32,12 @@ import wishlistRoutes from "./routes/wishlist.routes.js";
 import addressRoutes from "./routes/address.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 
-dotenv.config();
-
 console.log("Environment Variables:", {
   NODE_ENV: process.env.NODE_ENV,
-  MONGO_URI: process.env.MONGO_URI ? "exists" : "missing",
-  JWT_SECRET: process.env.JWT_SECRET ? "exists" : "missing",
+  PORT: process.env.PORT || 5000,
+  DB_NAME: process.env.DB_NAME || "(default from URI)",
+  MONGO_URI: process.env.MONGO_URI ? "configured" : "missing",
+  JWT_SECRET: process.env.JWT_SECRET ? "configured" : "missing",
   VERCEL: process.env.VERCEL ? "true" : "false",
 });
 
