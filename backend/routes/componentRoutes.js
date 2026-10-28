@@ -1,13 +1,17 @@
 import express from "express";
 import { getComponentModel } from "../models/components.model.js";
 import ComponentCategory from "../models/componentCategory.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { AppError } from "../utils/appError.js";
+import { APIQueryBuilder } from "../utils/apiQueryBuilder.js";
 
 const router = express.Router();
 
 // GET all categories
-router.get("/categories", async (req, res) => {
-  try {
-    const categories = await ComponentCategory.find();
+router.get(
+  "/categories",
+  asyncHandler(async (req, res) => {
+    const categories = await ComponentCategory.find().lean();
 
     const formattedCategories = categories.map((category) => ({
       title: category.title,
@@ -16,78 +20,114 @@ router.get("/categories", async (req, res) => {
     }));
 
     res.json(formattedCategories);
-  } catch (error) {
-    console.error("❌ Error fetching categories:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+  })
+);
 
-// GET all components of a specific type
-router.get("/:type", async (req, res) => {
-  try {
-    const { type } = req.params; // Example: "processors", "rams"
-    const ComponentModel = getComponentModel(type); // Get the correct collection dynamically
-
-    const components = await ComponentModel.find({}).lean(); //lean method to fetch the id, otherwise the id is not returned. Added by samiul
-    res.json(components);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-});
-
-//GET the companies
-router.get("/companies/:type", async (req, res) => {
-  try {
+// GET all components of a specific type (with APIQueryBuilder: Filtering, Sorting, Pagination)
+router.get(
+  "/:type",
+  asyncHandler(async (req, res, next) => {
     const { type } = req.params;
-
     const ComponentModel = getComponentModel(type);
-    const companies = await ComponentModel.distinct("company");
 
-    res.json(companies);
-  } catch (error) {
-    console.error("❌ Error fetching companies:", error);
-    res.status(500).json({ message: "Server error", error });
-  }
-});
+    if (!ComponentModel) {
+      return next(new AppError(`Component category "${type}" is not recognized`, 404));
+    }
+
+    const hasPaginationOrFilter =
+      req.query.page ||
+      req.query.limit ||
+      req.query.sort ||
+      req.query.fields ||
+      req.query.search ||
+      req.query.price ||
+      req.query.company;
+
+    if (hasPaginationOrFilter) {
+      const features = new APIQueryBuilder(ComponentModel.find(), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+
+      const [components, pagination] = await Promise.all([
+        features.query.lean(),
+        features.getPaginationMetadata(ComponentModel),
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        count: components.length,
+        pagination,
+        data: components,
+      });
+    }
+
+    // Default: Backwards-compatible raw array response for existing frontend pages
+    const components = await ComponentModel.find({}).lean();
+    res.setHeader("X-Total-Count", components.length);
+    return res.status(200).json(components);
+  })
+);
+
+// GET distinct companies for a category
+router.get(
+  "/companies/:type",
+  asyncHandler(async (req, res, next) => {
+    const { type } = req.params;
+    const ComponentModel = getComponentModel(type);
+
+    if (!ComponentModel) {
+      return next(new AppError(`Component category "${type}" is not recognized`, 404));
+    }
+
+    const companies = await ComponentModel.distinct("company");
+    res.status(200).json(companies);
+  })
+);
 
 // GET the price range (min and max price) for a specific component type
-router.get("/pricerange/:type", async (req, res) => {
-  try {
-    
+router.get(
+  "/pricerange/:type",
+  asyncHandler(async (req, res, next) => {
     const { type } = req.params;
     const ComponentModel = getComponentModel(type);
 
-    const minPriceDoc = await ComponentModel.findOne().sort({ price: 1 }).select("price").lean();
-    const maxPriceDoc = await ComponentModel.findOne().sort({ price: -1 }).select("price").lean();
+    if (!ComponentModel) {
+      return next(new AppError(`Component category "${type}" is not recognized`, 404));
+    }
+
+    const [minPriceDoc, maxPriceDoc] = await Promise.all([
+      ComponentModel.findOne().sort({ price: 1 }).select("price").lean(),
+      ComponentModel.findOne().sort({ price: -1 }).select("price").lean(),
+    ]);
 
     const minPrice = minPriceDoc?.price || 0;
     const maxPrice = maxPriceDoc?.price || 0;
 
-    res.json({ minPrice, maxPrice });
-  } catch (error) {
-    console.error("❌ Error fetching price range:", error);
-    res.status(500).json({ message: "Server error", error });
-  }
-});
-
+    res.status(200).json({ minPrice, maxPrice });
+  })
+);
 
 // GET a specific component by ID within a category
-router.get("/:type/:id", async (req, res) => {
-  try {
+router.get(
+  "/:type/:id",
+  asyncHandler(async (req, res, next) => {
     const { type, id } = req.params;
-    const ComponentModel = getComponentModel(type); // Get the correct collection dynamically
+    const ComponentModel = getComponentModel(type);
 
-    const component = await ComponentModel.findById(id).lean(); // Fetch the component by ID
-
-    if (!component) {
-      return res.status(404).json({ message: "Component not found" });
+    if (!ComponentModel) {
+      return next(new AppError(`Component category "${type}" is not recognized`, 404));
     }
 
-    res.json(component);
-  } catch (error) {
-    console.error("❌ Error fetching component:", error);
-    res.status(500).json({ message: "Server error", error });
-  }
-});
+    const component = await ComponentModel.findById(id).lean();
+
+    if (!component) {
+      return next(new AppError(`Component with ID "${id}" not found`, 404));
+    }
+
+    res.status(200).json(component);
+  })
+);
 
 export default router;
