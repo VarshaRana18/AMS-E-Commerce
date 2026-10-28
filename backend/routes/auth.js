@@ -16,6 +16,7 @@ import {
   updateProfile,
 } from "../controllers/auth.controller.js";
 import { protect, restrictTo } from "../middleware/auth.middleware.js";
+import { checkout } from "../controllers/order.controller.js";
 dotenv.config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -534,44 +535,16 @@ router.put("/cart/:email", async (req, res) => {
   }
 });
 
-//Add item to the orders table
-router.post("/checkout/:email", async (req, res) => {
+// Legacy checkout compatibility adapter (delegates to transactional checkout controller)
+router.post("/checkout/:email", async (req, res, next) => {
   try {
-    const { email } = req.params;
-    const { components, total_price, address } = req.body;
-
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    // Ensure components array is valid
-    if (!Array.isArray(components) || components.length === 0) {
-      return res.status(400).json({ message: "Invalid components data" });
-    }
-
-    const orderId = await generateOrderId();
-
-    // Create new order
-    const newOrder = new Order({
-      _id: orderId,
-      user_id: user._id,
-      components,
-      status: "Pending", // Default status
-      total_price,
-      address
-    });
-
-    await newOrder.save();
-
-    // Clear the user's cart after successful order creation
-    await User.updateOne(
-      { email },
-      { $set: { cart: [] } }
-    );
-    res.status(201).json({ message: "Order placed successfully", order: newOrder });
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    req.user = user;
+    return checkout(req, res, next);
   } catch (error) {
-    console.error("Checkout error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Legacy checkout adapter error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
