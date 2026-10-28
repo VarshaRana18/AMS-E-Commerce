@@ -90,3 +90,48 @@ export const restrictTo = (...roles) => {
     next();
   };
 };
+
+/**
+ * Middleware to eliminate Broken Object Level Authorization (BOLA / IDOR).
+ * Ensures a requester can only access or mutate their own account resources,
+ * unless granted overarching admin privileges.
+ * @param {string} paramKey - Key in req.params containing identifier (e.g., 'email', 'userId')
+ */
+export const verifyUserOwnership = (paramKey = "email") => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    // Administrators bypass resource ownership constraints
+    if (req.user.role === "admin") {
+      return next();
+    }
+
+    const targetValue = req.params[paramKey];
+    if (!targetValue) {
+      return next();
+    }
+
+    if (paramKey === "email") {
+      if (req.user.email.toLowerCase() !== targetValue.toLowerCase()) {
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: You are not authorized to access or modify resources belonging to another user.",
+        });
+      }
+    } else if (paramKey === "userId" || paramKey === "id") {
+      if (req.user._id.toString() !== targetValue.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: You are not authorized to access or modify resources belonging to another user.",
+        });
+      }
+    }
+
+    next();
+  };
+};
