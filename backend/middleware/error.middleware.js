@@ -29,6 +29,15 @@ const handleJWTExpiredError = () =>
 
 // Send detailed error diagnostics in Development
 const sendErrorDev = (err, res) => {
+  if (err.isOperational) {
+    return res.status(err.statusCode).json({
+      success: false,
+      status: err.status,
+      message: err.message,
+      details: err.details || null,
+    });
+  }
+
   res.status(err.statusCode).json({
     success: false,
     status: err.status,
@@ -66,13 +75,9 @@ const sendErrorProd = (err, res) => {
  * Express Centralized Error Handling Middleware.
  */
 export const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || "error";
-
-  let error = { ...err };
-  error.message = err.message;
-  error.name = err.name;
-  error.stack = err.stack;
+  let error = err;
+  error.statusCode = err.statusCode || 500;
+  error.status = err.status || "error";
 
   // Convert Mongoose & Auth errors into Operational AppErrors
   if (error.name === "CastError") error = handleCastErrorDB(error);
