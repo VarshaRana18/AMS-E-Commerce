@@ -34,3 +34,16 @@ export const updateProfileSchema = z.object({
   mobile: z.string().regex(/^[0-9+ -]{7,15}$/, "Invalid mobile phone format").optional(),
   profileImage: z.string().url("Invalid profile image URL").optional(),
 });
+
+export const verifyEmailSchema = z.object({
+  token: z
+    .string({ error: "Verification token is required" })
+    .min(16, "Verification token format is invalid"),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z
+    .string({ error: "Email is required" })
+    .trim()
+    .email("Invalid email address format"),
+});

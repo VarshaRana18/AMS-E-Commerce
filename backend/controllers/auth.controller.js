@@ -1,5 +1,7 @@
+import crypto from "crypto";
 import User from "../models/user.model.js";
 import { sendTokenResponse } from "../utils/jwt.js";
+import { sendVerificationEmail } from "../utils/email.js";
 
 /**
  * @desc    Register a new user
@@ -33,16 +35,38 @@ export const register = async (req, res) => {
       });
     }
 
-    // Create user (password will be hashed via pre-save hook)
-    const user = await User.create({
+    // Create user document (password will be hashed via pre-save hook)
+    const user = new User({
       name,
       email: email.toLowerCase().trim(),
       password,
       mobile,
       role: "customer",
+      isVerified: false,
     });
 
-    return sendTokenResponse(user, 201, res, "User registered successfully");
+    // Generate cryptographically secure verification token (SHA-256 hashed in DB)
+    const verificationToken = user.createEmailVerificationToken();
+    await user.save();
+
+    // Trigger transactional verification email (fail-safe dispatch)
+    try {
+      await sendVerificationEmail({
+        email: user.email,
+        name: user.name,
+        token: verificationToken,
+        req,
+      });
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError.message);
+    }
+
+    return sendTokenResponse(
+      user,
+      201,
+      res,
+      "User registered successfully! A verification email has been dispatched to your inbox."
+    );
   } catch (error) {
     console.error("Register error:", error);
     return res.status(500).json({
@@ -226,6 +250,228 @@ export const updateProfile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to update profile",
+    });
+  }
+};
+
+/**
+ * @desc    Validate verification token and activate account
+ * @route   GET /api/auth/verify-email
+ * @route   GET /api/auth/verify-email/:token
+ * @route   POST /api/auth/verify-email
+ * @access  Public
+ */
+export const verifyEmail = async (req, res) => {
+  try {
+    const token =
+      req.params.token || req.query.token || (req.body && req.body.token);
+
+    const isBrowserHtml =
+      req.method === "GET" &&
+      req.accepts("html") &&
+      !req.xhr &&
+      (!req.headers["accept"] || !req.headers["accept"].includes("application/json"));
+
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+    if (!token) {
+      if (isBrowserHtml) {
+        return res.status(400).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Verification Error - AMS E-Commerce</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+              .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+              .icon { font-size: 48px; color: #ef4444; margin-bottom: 16px; }
+              h1 { font-size: 22px; margin: 0 0 12px; }
+              p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 24px; }
+              a.btn { display: inline-block; background: #6366f1; color: #fff; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 8px; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="icon">&#9888;</div>
+              <h1>Missing Verification Token</h1>
+              <p>No verification token was provided in the request URL. Please check the link from your email.</p>
+              <a href="${clientUrl}" class="btn">Return to AMS Store</a>
+            </div>
+          </body>
+          </html>
+        `);
+      }
+      return res.status(400).json({
+        success: false,
+        status: "fail",
+        message: "Verification token is required.",
+      });
+    }
+
+    // 1. Hash incoming token using SHA-256 to compare with stored hash
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // 2. Locate user with valid matching unexpired token
+    const user = await User.findOne({
+      verificationToken: hashedToken,
+      verificationTokenExpires: { $gt: Date.now() },
+    }).select("+verificationToken +verificationTokenExpires");
+
+    if (!user) {
+      if (isBrowserHtml) {
+        return res.status(400).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Verification Failed - AMS E-Commerce</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+              .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+              .icon { font-size: 48px; color: #f59e0b; margin-bottom: 16px; }
+              h1 { font-size: 22px; margin: 0 0 12px; }
+              p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 24px; }
+              a.btn { display: inline-block; background: #6366f1; color: #fff; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 8px; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="icon">&#9888;</div>
+              <h1>Invalid or Expired Token</h1>
+              <p>The verification link has expired or has already been used. Please log in or request a new verification email.</p>
+              <a href="${clientUrl}" class="btn">Go to Login</a>
+            </div>
+          </body>
+          </html>
+        `);
+      }
+      return res.status(400).json({
+        success: false,
+        status: "fail",
+        message: "Verification token is invalid or has expired. Please request a new verification email.",
+      });
+    }
+
+    // 3. Mark user verified and clear token credentials
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    if (isBrowserHtml) {
+      return res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Email Verified - AMS E-Commerce</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+            .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+            .icon { font-size: 52px; color: #10b981; margin-bottom: 16px; }
+            h1 { font-size: 24px; margin: 0 0 12px; color: #f8fafc; }
+            p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 28px; }
+            a.btn { display: inline-block; background: #10b981; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 28px; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="icon">&#10004;</div>
+            <h1>Email Verified Successfully!</h1>
+            <p>Your AMS E-Commerce account is now verified. You have full access to all features, custom PC orders, and checkout.</p>
+            <a href="${clientUrl}" class="btn">Continue to AMS Store</a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Email verified successfully! You now have full access to your account.",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: true,
+      },
+    });
+  } catch (error) {
+    console.error("Verification error:", error);
+    return res.status(500).json({
+      success: false,
+      status: "error",
+      message: "Server error during email verification.",
+    });
+  }
+};
+
+/**
+ * @desc    Resend verification email to user
+ * @route   POST /api/auth/resend-verification
+ * @access  Public (Rate-limited)
+ */
+export const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        status: "fail",
+        message: "Email address is required.",
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    // Anti-enumeration: Return generic success even if account does not exist
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: "If an account with that email exists and is unverified, a verification link has been sent.",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        status: "fail",
+        message: "This email address is already verified.",
+      });
+    }
+
+    // Generate fresh cryptographic token
+    const verificationToken = user.createEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Send transactional verification email
+    try {
+      await sendVerificationEmail({
+        email: user.email,
+        name: user.name,
+        token: verificationToken,
+        req,
+      });
+    } catch (emailError) {
+      console.error("Resend verification email error:", emailError.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "A fresh verification email has been dispatched to your inbox.",
+    });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    return res.status(500).json({
+      success: false,
+      status: "error",
+      message: "Failed to resend verification email.",
     });
   }
 };

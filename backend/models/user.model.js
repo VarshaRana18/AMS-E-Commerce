@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const userSchema = new mongoose.Schema(
   {
@@ -40,6 +41,14 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    verificationToken: {
+      type: String,
+      select: false,
+    },
+    verificationTokenExpires: {
+      type: Date,
+      select: false,
     },
     image: {
       type: String,
@@ -120,6 +129,24 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Instance method: Generate cryptographically secure email verification token (OWASP compliant)
+userSchema.methods.createEmailVerificationToken = function () {
+  // 1. Generate 32-byte pseudo-random hexadecimal string
+  const rawToken = crypto.randomBytes(32).toString("hex");
+
+  // 2. Hash raw token using SHA-256 for secure storage (prevents exploitation if DB is leaked)
+  this.verificationToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
+  // 3. Set expiration timestamp to 24 hours from creation
+  this.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  // 4. Return unhashed token for email dispatch
+  return rawToken;
 };
 
 const User = mongoose.model("User", userSchema);

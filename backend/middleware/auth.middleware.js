@@ -92,6 +92,37 @@ export const restrictTo = (...roles) => {
 };
 
 /**
+ * Middleware ensuring the authenticated user has verified their email address.
+ * Prevents unverified or fraudulent accounts from accessing restricted resources
+ * (e.g., checkout, order placement, sensitive mutations).
+ */
+export const requireEmailVerified = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      status: "fail",
+      message: "Authentication required. Please log in first.",
+    });
+  }
+
+  // Administrators bypass verification requirements
+  if (req.user.role === "admin") {
+    return next();
+  }
+
+  if (!req.user.isVerified) {
+    return res.status(403).json({
+      success: false,
+      status: "fail",
+      code: "EMAIL_NOT_VERIFIED",
+      message: "Access restricted: Please verify your email address to perform this action.",
+    });
+  }
+
+  next();
+};
+
+/**
  * Middleware to eliminate Broken Object Level Authorization (BOLA / IDOR).
  * Ensures a requester can only access or mutate their own account resources,
  * unless granted overarching admin privileges.
