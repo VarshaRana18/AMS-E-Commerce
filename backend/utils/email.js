@@ -73,10 +73,10 @@ export const sendEmail = async ({
  * @param {string} params.token - Raw 32-byte cryptographic hex token
  * @param {Object} [params.req] - Express request object to resolve dynamic host/protocol
  */
-export const sendVerificationEmail = async ({ email, name, token, req }) => {
-  // Determine application URL (prefers CLIENT_URL, otherwise derives from request host)
-  const host = req ? `${req.protocol}://${req.get("host")}` : (process.env.SERVER_URL || "http://localhost:5000");
-  const verificationUrl = `${host}/api/auth/verify-email?token=${token}`;
+export const sendVerificationEmail = async ({ email, name, token }) => {
+  // Determine frontend client URL (defaults to Vite dev server port 5173)
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  const verificationUrl = `${clientUrl}/verify-email?token=${token}`;
 
   const html = `
     <!DOCTYPE html>

@@ -266,43 +266,7 @@ export const verifyEmail = async (req, res) => {
     const token =
       req.params.token || req.query.token || (req.body && req.body.token);
 
-    const isBrowserHtml =
-      req.method === "GET" &&
-      req.accepts("html") &&
-      !req.xhr &&
-      (!req.headers["accept"] || !req.headers["accept"].includes("application/json"));
-
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-
     if (!token) {
-      if (isBrowserHtml) {
-        return res.status(400).send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Verification Error - AMS E-Commerce</title>
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-              .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
-              .icon { font-size: 48px; color: #ef4444; margin-bottom: 16px; }
-              h1 { font-size: 22px; margin: 0 0 12px; }
-              p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 24px; }
-              a.btn { display: inline-block; background: #6366f1; color: #fff; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 8px; }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <div class="icon">&#9888;</div>
-              <h1>Missing Verification Token</h1>
-              <p>No verification token was provided in the request URL. Please check the link from your email.</p>
-              <a href="${clientUrl}" class="btn">Return to AMS Store</a>
-            </div>
-          </body>
-          </html>
-        `);
-      }
       return res.status(400).json({
         success: false,
         status: "fail",
@@ -320,34 +284,6 @@ export const verifyEmail = async (req, res) => {
     }).select("+verificationToken +verificationTokenExpires");
 
     if (!user) {
-      if (isBrowserHtml) {
-        return res.status(400).send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Verification Failed - AMS E-Commerce</title>
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-              .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
-              .icon { font-size: 48px; color: #f59e0b; margin-bottom: 16px; }
-              h1 { font-size: 22px; margin: 0 0 12px; }
-              p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 24px; }
-              a.btn { display: inline-block; background: #6366f1; color: #fff; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 8px; }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <div class="icon">&#9888;</div>
-              <h1>Invalid or Expired Token</h1>
-              <p>The verification link has expired or has already been used. Please log in or request a new verification email.</p>
-              <a href="${clientUrl}" class="btn">Go to Login</a>
-            </div>
-          </body>
-          </html>
-        `);
-      }
       return res.status(400).json({
         success: false,
         status: "fail",
@@ -360,35 +296,6 @@ export const verifyEmail = async (req, res) => {
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;
     await user.save({ validateBeforeSave: false });
-
-    if (isBrowserHtml) {
-      return res.status(200).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Email Verified - AMS E-Commerce</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-            .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
-            .icon { font-size: 52px; color: #10b981; margin-bottom: 16px; }
-            h1 { font-size: 24px; margin: 0 0 12px; color: #f8fafc; }
-            p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 28px; }
-            a.btn { display: inline-block; background: #10b981; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 28px; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="icon">&#10004;</div>
-            <h1>Email Verified Successfully!</h1>
-            <p>Your AMS E-Commerce account is now verified. You have full access to all features, custom PC orders, and checkout.</p>
-            <a href="${clientUrl}" class="btn">Continue to AMS Store</a>
-          </div>
-        </body>
-        </html>
-      `);
-    }
 
     return res.status(200).json({
       success: true,

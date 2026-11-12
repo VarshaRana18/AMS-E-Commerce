@@ -20,6 +20,7 @@ import CustomPCHP from "@/pages/custom-pc-hp";
 import RepairsPage from "@/pages/repairs";
 import ComponentsPage from "@/pages/components";
 import IndexPage from "@/pages/index";
+import VerifyEmailPage from "@/pages/verify-email";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route element={<IndexPage />} path="/" />
+          <Route element={<VerifyEmailPage />} path="/verify-email" />
           <Route element={<ComponentsPage />} path="/components" />
           <Route element={<ProductPage />} path="/components/:type" />
           <Route element={<ProductDetails />} path="/components/:type/:id" />
